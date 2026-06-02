@@ -45,23 +45,17 @@ struct CUBlas<float> {
 
   template <typename... ARGS>
   static void AXPY(ARGS... args) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(cublasSaxpy(args...));
-    PADDLE_THROW(common::errors::Unimplemented(
-        "cublasSaxpy is not implemented for xcuda"));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasSaxpy(args...));
   }
 
   template <typename... ARGS>
   static void SCAL(ARGS... args) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(cublasSscal(args...));
-    PADDLE_THROW(common::errors::Unimplemented(
-        "cublasSscal is not implemented for xcuda"));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasSscal(args...));
   }
 
   template <typename... ARGS>
   static void VCOPY(ARGS... args) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(cublasScopy(args...));
-    PADDLE_THROW(common::errors::Unimplemented(
-        "cublasScopy is not implemented for xcuda"));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasScopy(args...));
   }
 
   template <typename... ARGS>
@@ -196,20 +190,29 @@ struct CUBlas<float> {
 
   template <typename... ARGS>
   static void GETRF_BATCH(ARGS... args) {
-    PADDLE_THROW(phi::errors::Unimplemented( "GETRI_BATCH is not supported by xtrans."));
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasSgetrfBatched(args...));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasSgetrfBatched(args...));
   }
 
-  template <typename... ARGS>
-  static void GETRI_BATCH(ARGS... args) {
-   PADDLE_THROW(phi::errors::Unimplemented("GETRI_BATCH is not supported by xtrans. upgrade"));
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasSgetriBatched(args...));
+  static void GETRI_BATCH(cublasHandle_t handle,
+                          int n,
+                          const float **a,
+                          int lda,
+                          const int *ipiv,
+                          float **a_inv,
+                          int ldc,
+                          int *info,
+                          int batch_size) {
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasSgetriBatched(
+        handle, n,
+        (float* const*)(a), lda,
+        (int*)(ipiv),
+        (float* const*)(a_inv), ldc,
+        info, batch_size));
   }
 
   template <typename... ARGS>
   static void MATINV_BATCH(ARGS... args) {
     PADDLE_THROW(phi::errors::Unimplemented("SmatinvBatched is not supported by xtrans."));
-	  // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasSmatinvBatched(args...));
   }
 
   template <typename... ARGS>
@@ -217,10 +220,23 @@ struct CUBlas<float> {
     PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasSgetrsBatched(args...));
   }
 
-  template <typename... ARGS>
-  static void TRSM_BATCH(ARGS... args) {
-    PADDLE_THROW(phi::errors::Unimplemented("StrsmBatched is not supported by xtrans."));
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasStrsmBatched(args...));
+  static void TRSM_BATCH(cublasHandle_t handle,
+                          cublasSideMode_t side,
+                          cublasFillMode_t uplo,
+                          cublasOperation_t transA,
+                          cublasDiagType_t diag,
+                          int m,
+                          int n,
+                          const float *alpha,
+                          const float **A,
+                          int lda,
+                          float **B,
+                          int ldb,
+                          int batch_size) {
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasStrsmBatched(
+        handle, side, uplo, transA, diag, m, n, alpha,
+        (float* const*)(A), lda,
+        B, ldb, batch_size));
   }
 
   template <typename... ARGS>
@@ -238,23 +254,17 @@ struct CUBlas<double> {
 
   template <typename... ARGS>
   static void AXPY(ARGS... args) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(cublasDaxpy(args...));
-    PADDLE_THROW(common::errors::Unimplemented(
-        "cublasDaxpy is not implemented for xcuda"));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDaxpy(args...));
   }
 
   template <typename... ARGS>
   static void SCAL(ARGS... args) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(cublasDscal(args...));
-    PADDLE_THROW(common::errors::Unimplemented(
-        "cublasDscal is not implemented for xcuda"));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDscal(args...));
   }
 
   template <typename... ARGS>
   static void VCOPY(ARGS... args) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(cublasDcopy(args...));
-    PADDLE_THROW(common::errors::Unimplemented(
-        "cublasDcopy is not implemented for xcuda"));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDcopy(args...));
   }
 
   template <typename... ARGS>
@@ -305,16 +315,26 @@ struct CUBlas<double> {
     PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDgetrfBatched(args...));
   }
 
-  template <typename... ARGS>
-  static void GETRI_BATCH(ARGS... args) {
-    PADDLE_THROW(phi::errors::Unimplemented("GETRI_BATCH is not supported by xtrans. upgrade"));
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDgetriBatched(args...));
+  static void GETRI_BATCH(cublasHandle_t handle,
+                          int n,
+                          const double **a,
+                          int lda,
+                          const int *ipiv,
+                          double **a_inv,
+                          int ldc,
+                          int *info,
+                          int batch_size) {
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDgetriBatched(
+        handle, n,
+        (double* const*)(a), lda,
+        (int*)(ipiv),
+        (double* const*)(a_inv), ldc,
+        info, batch_size));
   }
 
   template <typename... ARGS>
   static void MATINV_BATCH(ARGS... args) {
     PADDLE_THROW(phi::errors::Unimplemented("DmatinvBatched is not supported by xtrans."));
-	  // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDmatinvBatched(args...));
   }
 
   template <typename... ARGS>
@@ -322,10 +342,23 @@ struct CUBlas<double> {
     PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDgetrsBatched(args...));
   }
 
-  template <typename... ARGS>
-  static void TRSM_BATCH(ARGS... args) {
-    PADDLE_THROW(phi::errors::Unimplemented("cublasDtrsmBatched is not supported by xtrans."));
-	  // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDtrsmBatched(args...));
+  static void TRSM_BATCH(cublasHandle_t handle,
+                          cublasSideMode_t side,
+                          cublasFillMode_t uplo,
+                          cublasOperation_t transA,
+                          cublasDiagType_t diag,
+                          int m,
+                          int n,
+                          const double *alpha,
+                          const double **A,
+                          int lda,
+                          double **B,
+                          int ldb,
+                          int batch_size) {
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasDtrsmBatched(
+        handle, side, uplo, transA, diag, m, n, alpha,
+        (double* const*)(A), lda,
+        B, ldb, batch_size));
   }
 
   template <typename... ARGS>
@@ -352,21 +385,6 @@ struct CUBlas<phi::float16> {
                    const float16 *beta,
                    float16 *C,
                    int ldc) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(
-    //     phi::dynload::cublasHgemm(handle,
-    //                               transa,
-    //                               transb,
-    //                               m,
-    //                               n,
-    //                               k,
-    //                               reinterpret_cast<const __half *>(alpha),
-    //                               reinterpret_cast<const __half *>(A),
-    //                               lda,
-    //                               reinterpret_cast<const __half *>(B),
-    //                               ldb,
-    //                               reinterpret_cast<const __half *>(beta),
-    //                               reinterpret_cast<__half *>(C),
-    //                               ldc));
     PADDLE_ENFORCE_GPU_SUCCESS(
         phi::dynload::cublasHgemm(handle,
                                   transa,
@@ -466,25 +484,6 @@ struct CUBlas<phi::float16> {
                                  long long int strideC,  // NOLINT
                                  int batchCount) {
 #if CUDA_VERSION >= 8000
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasHgemmStridedBatched(
-    //     handle,
-    //     transa,
-    //     transb,
-    //     m,
-    //     n,
-    //     k,
-    //     reinterpret_cast<const __half *>(alpha),
-    //     reinterpret_cast<const __half *>(A),
-    //     lda,
-    //     strideA,
-    //     reinterpret_cast<const __half *>(B),
-    //     ldb,
-    //     strideB,
-    //     reinterpret_cast<const __half *>(beta),
-    //     reinterpret_cast<__half *>(C),
-    //     ldc,
-    //     strideC,
-    //     batchCount));
     PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasHgemmStridedBatched(
         handle,
         transa,
@@ -681,15 +680,14 @@ struct CUBlas<phi::complex64> {
                    const int incX,
                    phi::complex64 *Y,
                    const int incY) {
-    PADDLE_THROW(phi::errors::Unimplemented("Complex AXPY is not supported by xtrans yet."));
-      //PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasCaxpy(
-    //    handle,
-    //    n,
-    //    reinterpret_cast<const cuFloatComplex *>(alpha),
-    //    reinterpret_cast<const cuFloatComplex *>(X),
-    //    incX,
-    //    reinterpret_cast<cuFloatComplex *>(Y),
-    //    incY));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasCaxpy(
+        handle,
+        n,
+        reinterpret_cast<const cuFloatComplex *>(alpha),
+        reinterpret_cast<const cuFloatComplex *>(X),
+        incX,
+        reinterpret_cast<cuFloatComplex *>(Y),
+        incY));
   }
 
   static void GEMM_STRIDED_BATCH(cublasHandle_t handle,
@@ -921,20 +919,6 @@ struct CUBlas<phi::complex64> {
                          phi::complex64 **B,
                          int ldb,
                          int batch_size) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasCtrsmBatched(
-    //     handle,
-    //     side,
-    //     uplo,
-    //     transa,
-    //     diag,
-    //     m,
-    //     n,
-    //     reinterpret_cast<const cuFloatComplex *>(alpha),
-    //     reinterpret_cast<const cuFloatComplex **>(A),
-    //     lda,
-    //     reinterpret_cast<cuFloatComplex **>(B),
-    //     ldb,
-    //     batch_size));
     PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasCtrsmBatched(
         handle,
         side,
@@ -977,17 +961,6 @@ struct CUBlas<phi::complex64> {
                           int ldc,
                           int *info,
                           int batch_size) {
-    // PADDLE_THROW(phi::errors::Unimplemented("Complex GETRI_BATCH is not supported by xtrans yet."));
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasCgetriBatched(
-    //     handle,
-    //     n,
-    //     reinterpret_cast<const cuFloatComplex **>(A),
-    //     lda,
-    //     ipiv,
-    //     reinterpret_cast<cuFloatComplex **>(Ainv),
-    //     ldc,
-    //     info,
-    //     batch_size));
     PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasCgetriBatched(
         handle,
 	      n,
@@ -1009,15 +982,6 @@ struct CUBlas<phi::complex64> {
                            int *info,
                            int batch_size) {
     PADDLE_THROW(phi::errors::Unimplemented("Complex MATINV_BATCH is not supported by xtrans yet."));
-      // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasCmatinvBatched(
-      //  handle,
-      //  n,
-      //  reinterpret_cast<const cuFloatComplex **>(A),
-      //  lda,
-      //  reinterpret_cast<cuFloatComplex **>(Ainv),
-      //  lda_inv,
-      //  info,
-      //  batch_size));
   }
 
   static void DOT(cublasHandle_t handle,
@@ -1074,15 +1038,14 @@ struct CUBlas<phi::complex128> {
                    const int incX,
                    phi::complex128 *Y,
                    const int incY) {
-    PADDLE_THROW(phi::errors::Unimplemented("Complex AXPY is not supported by xtrans yet."));
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasZaxpy(
-    //     handle,
-    //     n,
-    //     reinterpret_cast<const cuDoubleComplex *>(alpha),
-    //     reinterpret_cast<const cuDoubleComplex *>(X),
-    //     incX,
-    //     reinterpret_cast<cuDoubleComplex *>(Y),
-    //     incY));
+    PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasZaxpy(
+        handle,
+        n,
+        reinterpret_cast<const cuDoubleComplex *>(alpha),
+        reinterpret_cast<const cuDoubleComplex *>(X),
+        incX,
+        reinterpret_cast<cuDoubleComplex *>(Y),
+        incY));
   }
 
   static void GEMM_STRIDED_BATCH(cublasHandle_t handle,
@@ -1200,20 +1163,6 @@ struct CUBlas<phi::complex128> {
                          phi::complex128 **B,
                          int ldb,
                          int batch_size) {
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasZtrsmBatched(
-    //     handle,
-    //     side,
-    //     uplo,
-    //     transa,
-    //     diag,
-    //     m,
-    //     n,
-    //     reinterpret_cast<const cuDoubleComplex *>(alpha),
-    //     reinterpret_cast<const cuDoubleComplex **>(A),
-    //     lda,
-    //     reinterpret_cast<cuDoubleComplex **>(B),
-    //     ldb,
-    //     batch_size));
     PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasZtrsmBatched(
         handle,
         side,
@@ -1370,17 +1319,6 @@ struct CUBlas<phi::complex128> {
                           int ldc,
                           int *info,
                           int batch_size) {
-    // PADDLE_THROW(phi::errors::Unimplemented("Complex GETRI_BATCH is not supported by xtrans yet."));
-    // PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasZgetriBatched(
-    //     handle,
-    //     n,
-    //     reinterpret_cast<const cuDoubleComplex **>(A),
-    //     lda,
-    //     ipiv,
-    //     reinterpret_cast<cuDoubleComplex **>(Ainv),
-    //     ldc,
-    //     info,
-    //     batch_size));
     PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasZgetriBatched(
         handle,
         n,
@@ -1402,15 +1340,6 @@ struct CUBlas<phi::complex128> {
                            int *info,
                            int batch_size) {
       PADDLE_THROW(phi::errors::Unimplemented("Complex MATINV_BATCH is not supported by xtrans yet."));
-      //PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasZmatinvBatched(
-    //    handle,
-    //    n,
-    //    reinterpret_cast<const cuDoubleComplex **>(A),
-    //    lda,
-    //    reinterpret_cast<cuDoubleComplex **>(Ainv),
-    //    lda_inv,
-    //    info,
-    //    batch_size));
   }
 
   static void DOT(cublasHandle_t handle,
@@ -2609,6 +2538,7 @@ void Blas<phi::GPUContext>::BatchedGEMM(CBLAS_TRANSPOSE transA,
 #else
     auto compute_type = CUDA_R_32F;
 #endif
+    cudaDataType_t compute_data_type = CUDA_R_32F;
 
     float h_alpha = static_cast<float>(alpha);
     float h_beta = static_cast<float>(beta);
@@ -2624,6 +2554,7 @@ void Blas<phi::GPUContext>::BatchedGEMM(CBLAS_TRANSPOSE transA,
 #else
       compute_type = CUDA_R_16F;
 #endif
+      compute_data_type = CUDA_R_16F;
     }
     if (M > INT_MAX_VALUE || N > INT_MAX_VALUE || K > INT_MAX_VALUE) {
 #if 1 || (CUDA_VERSION >= 12030 && defined(__linux__))
@@ -2658,34 +2589,32 @@ void Blas<phi::GPUContext>::BatchedGEMM(CBLAS_TRANSPOSE transA,
           "cublasGemmStridedBatchedEx_64 is not supported on cuda < 12.3"));
 #endif  // CUDA_VERSION >= 12030
     } else {
-	 PADDLE_THROW(common::errors::Unimplemented(
-          "cublasGemmStridedBatchedEx_64 is not supported "));
-      // dev_ctx_.TensorCoreCublasCallIfAvailable([&](cublasHandle_t handle) {
-      //   PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasGemmStridedBatchedEx(
-      //       handle,
-      //       cuTransB,
-      //       cuTransA,
-      //       static_cast<int>(N),
-      //       static_cast<int>(M),
-      //       static_cast<int>(K),
-      //       a,
-      //       B,
-      //       fp,
-      //       static_cast<int>(ldb),
-      //       strideB,
-      //       A,
-      //       fp,
-      //       static_cast<int>(lda),
-      //       strideA,
-      //       b,
-      //       C,
-      //       fp,
-      //       static_cast<int>(ldc),
-      //       strideC,
-      //       static_cast<int>(batchCount),
-      //       compute_type,
-      //       algo));
-      // });
+      dev_ctx_.TensorCoreCublasCallIfAvailable([&](cublasHandle_t handle) {
+        PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasGemmStridedBatchedEx(
+            handle,
+            cuTransB,
+            cuTransA,
+            static_cast<int>(N),
+            static_cast<int>(M),
+            static_cast<int>(K),
+            a,
+            B,
+            fp,
+            static_cast<int>(ldb),
+            strideB,
+            A,
+            fp,
+            static_cast<int>(lda),
+            strideA,
+            b,
+            C,
+            fp,
+            static_cast<int>(ldc),
+            strideC,
+            static_cast<int>(batchCount),
+            compute_data_type,
+            algo));
+      });
     }
   } else {
 #endif  // CUDA_VERSION >= 9010
@@ -2787,6 +2716,7 @@ void Blas<phi::GPUContext>::BatchedGEMM(CBLAS_TRANSPOSE transA,
 #else
     auto compute_type = CUDA_R_32F;
 #endif
+    cudaDataType_t compute_data_type = CUDA_R_32F;
 
     float h_alpha = static_cast<float>(alpha);
     float h_beta = static_cast<float>(beta);
@@ -2802,6 +2732,7 @@ void Blas<phi::GPUContext>::BatchedGEMM(CBLAS_TRANSPOSE transA,
 #else
       compute_type = CUDA_R_16F;
 #endif
+      compute_data_type = CUDA_R_16F;
     }
 
     if (M > INT_MAX_VALUE || N > INT_MAX_VALUE || K > INT_MAX_VALUE ||
@@ -2838,34 +2769,32 @@ void Blas<phi::GPUContext>::BatchedGEMM(CBLAS_TRANSPOSE transA,
           "cublasGemmStridedBatchedEx_64 is not supported on cuda < 12.3"));
 #endif  // CUDA_VERSION >= 12030
     } else {
-      PADDLE_THROW(common::errors::Unimplemented(
-          "cublasGemmStridedBatchedEx is not supported."));
-      // dev_ctx_.TensorCoreCublasCallIfAvailable([&](cublasHandle_t handle) {
-      //   PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasGemmStridedBatchedEx(
-      //       handle,
-      //       cuTransB,
-      //       cuTransA,
-      //       static_cast<int>(N),
-      //       static_cast<int>(M),
-      //       static_cast<int>(K),
-      //       a,
-      //       B,
-      //       fp,
-      //       static_cast<int>(ldb),
-      //       strideB,
-      //       A,
-      //       fp,
-      //       static_cast<int>(lda),
-      //       strideA,
-      //       b,
-      //       C,
-      //       fp,
-      //       static_cast<int>(ldc),
-      //       strideC,
-      //       static_cast<int>(batchCount),
-      //       compute_type,
-      //       algo));
-      // });
+      dev_ctx_.TensorCoreCublasCallIfAvailable([&](cublasHandle_t handle) {
+        PADDLE_ENFORCE_GPU_SUCCESS(phi::dynload::cublasGemmStridedBatchedEx(
+            handle,
+            cuTransB,
+            cuTransA,
+            static_cast<int>(N),
+            static_cast<int>(M),
+            static_cast<int>(K),
+            a,
+            B,
+            fp,
+            static_cast<int>(ldb),
+            strideB,
+            A,
+            fp,
+            static_cast<int>(lda),
+            strideA,
+            b,
+            C,
+            fp,
+            static_cast<int>(ldc),
+            strideC,
+            static_cast<int>(batchCount),
+            compute_data_type,
+            algo));
+      });
     }
   } else {
 #endif  // CUDA_VERSION >= 9010
@@ -2992,7 +2921,7 @@ inline void Blas<phi::GPUContext>::BatchedGEMM(CBLAS_TRANSPOSE transA,
                                                    static_cast<int>(ldc),
                                                    strideC,
                                                    static_cast<int>(batchCount),
-                                                   (cudaDataType_t)CUBLAS_COMPUTE_32F,
+                                                   CUDA_R_32F,
                                                    algo));
     });
   }
@@ -3097,7 +3026,7 @@ inline void Blas<phi::GPUContext>::BatchedGEMM(CBLAS_TRANSPOSE transA,
                                                    static_cast<int>(ldc),
                                                    strideC,
                                                    static_cast<int>(batchCount),
-                                                  (cudaDataType_t)CUBLAS_COMPUTE_32F,
+                                                  CUDA_R_32F,
                                                    algo));
     });
   }

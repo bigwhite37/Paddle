@@ -256,8 +256,12 @@ void SetDeviceId(int id) {
                           id,
                           GetGPUDeviceCount()));
 
-    PADDLE_RETRY_CUDA_SUCCESS(cudaSetDevice(id));
-    VLOG(4) << "SetDeviceId " << id;
+    int prev_id;
+    auto get_device_status = cudaGetDevice(&prev_id);
+    if (get_device_status != cudaSuccess || prev_id != id) {
+      PADDLE_RETRY_CUDA_SUCCESS(cudaSetDevice(id));
+      VLOG(4) << "SetDeviceId " << id;
+    }
     first_call = false;
     return;
   }
